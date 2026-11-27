@@ -1,0 +1,1 @@
+var WEB3KEY="COLLE-ICI-TA-CLE";

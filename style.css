@@ -60,3 +60,9 @@ body>button{bottom:84px!important}
 .chip{background:#e3f3ea;color:var(--gd);font-weight:600;text-decoration:none;padding:7px 14px;border-radius:999px;font-size:.9rem}
 li.err{color:#c0392b;display:block}
 .btn[disabled]{opacity:.6}
+textarea{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:#fff;color:var(--tx)}
+#contact input,#contact textarea{width:100%;margin-bottom:10px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+h3{font-size:1rem;margin:14px 0 4px}
+h4{font-size:.95rem;margin:12px 0 0}
+footer a{color:var(--gd);font-weight:600}
