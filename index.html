@@ -28,6 +28,7 @@
 </select>
 </header>
 <main>
+<div id="v-scan" class="view">
 <section class="card">
 <h1 data-i18n="title"></h1>
 <div class="row">
@@ -45,9 +46,24 @@
 <button id="loc" class="btn alt" data-i18n="storesBtn"></button>
 <ul id="stores" class="list"></ul>
 </section>
+</div>
+<div id="v-hist" class="view" hidden>
+<section class="card">
+<h2 data-i18n="tabHist"></h2>
+<ul id="histList" class="list"></ul>
+<button id="histClear" class="btn alt" data-i18n="clear"></button>
+</section>
+</div>
+<div id="v-fav" class="view" hidden>
+<section class="card">
+<h2 data-i18n="tabFav"></h2>
+<ul id="favList" class="list"></ul>
+</section>
+</div>
 </main>
 <footer>
 <p><b>Riamo Nunito</b> · riamonunito.pages.dev</p>
+<p><a href="mailto:riamonunito@gmail.com">✉️ riamonunito@gmail.com</a></p>
 <nav class="soc">
 <a href="https://www.youtube.com/@Riamonunito" target="_blank" rel="noopener noreferrer">YouTube</a>
 <a href="https://www.instagram.com/riamonunito" target="_blank" rel="noopener noreferrer">Instagram</a>
@@ -57,7 +73,13 @@
 </nav>
 <p class="small" data-i18n="credits"></p>
 </footer>
+<nav class="tabs">
+<button id="tab-scan" class="on"><span>🔍</span><i data-i18n="tabScan"></i></button>
+<button id="tab-hist"><span>🕘</span><i data-i18n="tabHist"></i></button>
+<button id="tab-fav"><span>⭐</span><i data-i18n="tabFav"></i></button>
+</nav>
 <script src="/i18n.js" charset="utf-8"></script>
+<script src="/i18n-extra.js" charset="utf-8"></script>
 <script src="/app.js" charset="utf-8"></script>
 <script src="/pwa.js" charset="utf-8"></script>
 </body>

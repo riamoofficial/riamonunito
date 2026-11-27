@@ -1,47 +1,71 @@
 (function(){
 "use strict";
 var API="https://world.openfoodfacts.org",LANGS=["fr","en","ar","es"],lang="",nearby=[],current=null,stream=null,timer=null,scanning=false;
+var OVP=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
+var FIELDS="code,product_name,brands,image_front_small_url,nutriscore_grade,nutrition_grades,nova_group,stores";
 function $(id){return document.getElementById(id)}
+function load(k){try{return JSON.parse(localStorage.getItem(k)||"[]")}catch(e){return[]}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 try{lang=localStorage.getItem("lang")||""}catch(e){}
 if(LANGS.indexOf(lang)<0){lang=(navigator.language||"fr").slice(0,2);if(LANGS.indexOf(lang)<0)lang="fr"}
 function t(k){return(I18N[lang]&&I18N[lang][k])||I18N.fr[k]||k}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
 function msg(s,err){var m=$("msg");m.textContent=s||"";m.className="msg"+(err?" err":"")}
-function getJSON(u){return fetch(u).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})}
+function getJSON(u,ms){
+var ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(function(){ac.abort()},ms||20000):0;
+return fetch(u,ac?{signal:ac.signal}:{}).then(function(r){clearTimeout(tm);if(!r.ok){var e=new Error("HTTP "+r.status);e.status=r.status;throw e}return r.json()},function(e){clearTimeout(tm);throw e})}
+function errText(e){if(e&&e.name==="AbortError")return t("neterr")+" (timeout)";if(e&&[403,429,503,504].indexOf(e.status)>-1)return t("busy");return t("neterr")+" ("+((e&&e.message)||"?")+")"}
 function pname(p){return p["product_name_"+lang]||p.product_name||""}
 function grade(p){var g=String(p.nutriscore_grade||p.nutrition_grades||"").toLowerCase();return/^[a-e]$/.test(g)?g:""}
 function rank(g){return g?"abcde".indexOf(g):-1}
 function tags(arr){return(arr||[]).map(function(a){var k=a.replace(/^.*:/,""),i=ALK.indexOf(k),al=(I18N[lang]||I18N.fr).al;return i>=0&&al[i]?al[i]:k.replace(/-/g," ")}).join(", ")}
 function isNear(s){var a=String(s).toLowerCase().split(",");return nearby.some(function(n){return n.length>2&&a.some(function(x){x=x.trim();return x.length>2&&(n.indexOf(x)>-1||x.indexOf(n)>-1)})})}
-function item(p){
+function norm(p){return{code:p.code,name:pname(p)||p.code,brands:p.brands||"",img:p.image_front_small_url||"",g:grade(p),stores:p.stores||""}}
+function isFav(c){return load("fav").some(function(x){return x.code===c})}
+function toggleFav(o){var L=load("fav"),i=-1;L.forEach(function(x,j){if(x.code===o.code)i=j});if(i>-1)L.splice(i,1);else L.unshift(o);save("fav",L);return i<0}
+function addHist(o){var L=load("hist").filter(function(x){return x.code!==o.code});L.unshift(o);save("hist",L.slice(0,40))}
+function item(o){
 var li=el("li"),bx=el("div","alt-item"),tx=el("div");
-if(p.image_front_small_url){var im=el("img");im.src=p.image_front_small_url;im.alt="";bx.appendChild(im)}
-tx.appendChild(el("div","",pname(p)||p.code));
-if(p.brands)tx.appendChild(el("small","",p.brands));
-if(p.stores){tx.appendChild(el("div","small",t("sold")+" : "+p.stores));if(isNear(p.stores))tx.appendChild(el("span","tag",t("near")))}
+if(o.img){var im=el("img");im.src=o.img;im.alt="";bx.appendChild(im)}
+tx.appendChild(el("div","",o.name||o.code));
+if(o.brands)tx.appendChild(el("small","",o.brands));
+if(o.stores){tx.appendChild(el("div","small",t("sold")+" : "+o.stores));if(isNear(o.stores))tx.appendChild(el("span","tag",t("near")))}
 bx.appendChild(tx);li.appendChild(bx);
-var g=grade(p);if(g)li.appendChild(el("span","badge ns-"+g,g.toUpperCase()));
-bx.onclick=function(){loadCode(p.code);window.scrollTo(0,0)};
+if(o.g)li.appendChild(el("span","badge ns-"+o.g,o.g.toUpperCase()));
+bx.onclick=function(){loadCode(o.code)};
 return li}
+function setView(v){
+["scan","hist","fav"].forEach(function(n){$("v-"+n).hidden=n!==v;$("tab-"+n).className=n===v?"on":""});
+if(v==="hist")renderList("hist","histList");
+if(v==="fav")renderList("fav","favList")}
+function renderList(key,id){var ul=$(id),L=load(key);ul.textContent="";if(!L.length){ul.appendChild(el("li","",t("empty")));return}L.forEach(function(o){ul.appendChild(item(o))})}
 function loadCode(code){
-stopScan();msg(t("loading"));$("results").hidden=true;
-getJSON(API+"/api/v2/product/"+encodeURIComponent(code)+".json?fields=code,product_name,product_name_"+lang+",brands,image_front_small_url,nutriscore_grade,nutrition_grades,nova_group,nutriments,ingredients_text,ingredients_text_"+lang+",allergens_tags,traces_tags,additives_tags,categories_tags,stores")
-.then(function(d){if(d.status!==1||!d.product){msg(t("notfound"),true);$("product").hidden=true;return}msg("");current=d.product;showProduct(current)})
-.catch(function(){msg(t("neterr"),true)})}
+stopScan();setView("scan");msg(t("loading"));$("results").hidden=true;
+getJSON(API+"/api/v2/product/"+encodeURIComponent(code)+".json?fields="+FIELDS+",product_name_"+lang+",nutriments,ingredients_text,ingredients_text_"+lang+",allergens_tags,traces_tags,additives_tags,categories_tags")
+.then(function(d){
+if(d.status!==1||!d.product){msg(t("notfound"),true);$("product").hidden=true;return}
+msg("");current=d.product;current.code=current.code||d.code||code;
+addHist(norm(current));showProduct(current);window.scrollTo(0,0)})
+.catch(function(e){msg(errText(e),true)})}
 function searchName(q){
 msg(t("loading"));$("product").hidden=true;
-getJSON(API+"/cgi/search.pl?search_simple=1&action=process&json=1&page_size=12&fields=code,product_name,product_name_"+lang+",brands,image_front_small_url,nutriscore_grade,nutrition_grades&search_terms="+encodeURIComponent(q))
+getJSON(API+"/cgi/search.pl?search_simple=1&action=process&json=1&page_size=12&fields="+FIELDS+",product_name_"+lang+"&search_terms="+encodeURIComponent(q))
 .then(function(d){msg("");var bx=$("results"),ul=el("ul","list"),L=(d.products||[]).filter(function(p){return p.code});
 bx.textContent="";bx.hidden=false;bx.appendChild(el("h2","",t("results")));
 if(!L.length)ul.appendChild(el("li","",t("notfound")));
-L.forEach(function(p){ul.appendChild(item(p))});bx.appendChild(ul)})
-.catch(function(){msg(t("neterr"),true)})}
+L.forEach(function(p){ul.appendChild(item(norm(p)))});bx.appendChild(ul)})
+.catch(function(e){msg(errText(e),true)})}
 function showProduct(p){
-var box=$("product"),c=el("section","card"),head=el("div","head");
+var box=$("product"),c=el("section","card"),head=el("div","head"),o=norm(p);
 box.hidden=false;box.textContent="";
-if(p.image_front_small_url){var im=el("img");im.src=p.image_front_small_url;im.alt="";head.appendChild(im)}
-var h=el("div");h.appendChild(el("h1","",pname(p)||p.code));h.appendChild(el("div","small",p.brands||""));head.appendChild(h);c.appendChild(head);
-var g=grade(p),nv=parseInt(p.nova_group,10)||0,adds=(p.additives_tags||[]).length,bd=el("div","badges");
+if(o.img){var im=el("img");im.src=o.img;im.alt="";head.appendChild(im)}
+var h=el("div");h.appendChild(el("h1","",o.name));h.appendChild(el("div","small",o.brands));head.appendChild(h);
+var fb=el("button","star",isFav(o.code)?"★":"☆");
+fb.onclick=function(){fb.textContent=toggleFav(o)?"★":"☆"};
+head.appendChild(fb);c.appendChild(head);
+var g=o.g,nv=parseInt(p.nova_group,10)||0,adds=(p.additives_tags||[]).length,sc=el("div","scale"),bd=el("div","badges");
+"abcde".split("").forEach(function(l){sc.appendChild(el("span","sc ns-"+l+(l===g?" on":""),l.toUpperCase()))});
+c.appendChild(sc);
 bd.appendChild(el("span","badge"+(g?" ns-"+g:""),t("nutri")+" "+(g?g.toUpperCase():"?")));
 bd.appendChild(el("span","badge",t("nova")+" "+(nv||"?")));c.appendChild(bd);
 var bad=g==="d"||g==="e"||nv===4||adds>=5,good=(g==="a"||g==="b")&&nv<4&&adds<5;
@@ -55,33 +79,44 @@ line("ingredients",p["ingredients_text_"+lang]||p.ingredients_text||"–");
 line("allergens",tags(p.allergens_tags)||t("none"));
 line("traces",tags(p.traces_tags)||t("none"));
 line("additives",(p.additives_tags||[]).map(function(a){return a.replace(/^.*:/,"").toUpperCase()}).join(", ")||t("none"));
-if(p.stores)line("sold",p.stores);
+c.appendChild(el("h2","",t("whereBuy")));
+var st=(p.stores||"").split(",").map(function(s){return s.trim()}).filter(Boolean).slice(0,8);
+if(!st.length)c.appendChild(el("p","small",t("noStore")));
+else{var w=el("div","chips");st.forEach(function(s){var a=el("a","chip",s+(isNear(s)?" "+t("nearYou"):""));a.href="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(s);a.target="_blank";a.rel="noopener noreferrer";w.appendChild(a)});c.appendChild(w)}
 box.appendChild(c);
-var ac=el("section","card"),ul=el("ul","list");ac.appendChild(el("h2","",t("altTitle")));ac.appendChild(ul);box.appendChild(ac);
-loadAlts(p,ul)}
-function loadAlts(p,ul){
-var cats=p.categories_tags||[],cat=cats[cats.length-1];
-if(!cat){ul.appendChild(el("li","",t("altNone")));return}
-ul.appendChild(el("li","",t("loading")));
-getJSON(API+"/api/v2/search?categories_tags="+encodeURIComponent(cat)+"&sort_by=unique_scans_n&page_size=40&fields=code,product_name,product_name_"+lang+",brands,image_front_small_url,nutriscore_grade,nutrition_grades,nova_group,stores")
-.then(function(d){var cur=rank(grade(p)),lim=cur<0?2:cur;
-var L=(d.products||[]).filter(function(x){return x.code!==p.code&&grade(x)&&rank(grade(x))<lim});
+var ac=el("section","card"),ul=el("ul","list"),bt=el("button","btn alt",t("showAlt")),cats=p.categories_tags||[],cat=cats[cats.length-1];
+ac.appendChild(el("h2","",t("altTitle")));ac.appendChild(bt);ac.appendChild(ul);box.appendChild(ac);
+bt.onclick=function(){loadAlts(p,ul,bt)};
+if(cat){var cc=load("alt:"+cat+":"+altLim(p));if(cc.length){bt.hidden=true;showAlts(ul,cc)}}}
+function altLim(p){var c=rank(grade(p));return c<0?2:c}
+function showAlts(ul,L){ul.textContent="";if(!L.length){ul.appendChild(el("li","",t("altNone")));return}L.forEach(function(o){ul.appendChild(item(o))})}
+function loadAlts(p,ul,bt){
+var cats=p.categories_tags||[],cat=cats[cats.length-1],lim=altLim(p);
+if(!cat||lim===0){bt.hidden=true;showAlts(ul,[]);return}
+var key="alt:"+cat+":"+lim,cc=load(key);
+if(cc.length){bt.hidden=true;showAlts(ul,cc);return}
+bt.disabled=true;ul.textContent="";ul.appendChild(el("li","",t("loading")));
+getJSON(API+"/api/v2/search?categories_tags="+encodeURIComponent(cat)+"&sort_by=unique_scans_n&page_size=30&fields="+FIELDS+",product_name_"+lang,25000)
+.then(function(d){
+var L=(d.products||[]).filter(function(x){return x.code&&x.code!==p.code&&grade(x)&&rank(grade(x))<lim});
 L.sort(function(a,b){return rank(grade(a))-rank(grade(b))||(parseInt(a.nova_group,10)||9)-(parseInt(b.nova_group,10)||9)});
-ul.textContent="";
-if(!L.length){ul.appendChild(el("li","",t("altNone")));return}
-L.slice(0,8).forEach(function(x){ul.appendChild(item(x))})})
-.catch(function(){ul.textContent="";ul.appendChild(el("li","",t("neterr")))})}
+var R=L.slice(0,8).map(norm);
+if(R.length)save(key,R);
+bt.disabled=false;showAlts(ul,R)})
+.catch(function(e){bt.disabled=false;bt.textContent=t("retry");ul.textContent="";ul.appendChild(el("li","err",errText(e)))})}
 function dist(a,b,c,d){var R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)*Math.sin(y/2);return 2*R*Math.asin(Math.sqrt(h))}
+function overpass(q,i){
+return fetch(OVP[i],{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)})
+.then(function(r){if(!r.ok){var e=new Error("HTTP "+r.status);e.status=r.status;throw e}return r.json()})
+.catch(function(e){if(i+1<OVP.length)return overpass(q,i+1);throw e})}
 function locate(){
 var ul=$("stores");ul.textContent="";
 if(!navigator.geolocation){ul.appendChild(el("li","",t("locDenied")));return}
 ul.appendChild(el("li","",t("locating")));
 navigator.geolocation.getCurrentPosition(function(pos){
 var la=pos.coords.latitude,lo=pos.coords.longitude;
-var q='[out:json][timeout:20];(node["shop"="supermarket"](around:3000,'+la+','+lo+');way["shop"="supermarket"](around:3000,'+la+','+lo+'););out center 25;';
-fetch("https://overpass-api.de/api/interpreter",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)})
-.then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
-.then(function(d){
+var q='[out:json][timeout:25];(node["shop"="supermarket"](around:3000,'+la+','+lo+');way["shop"="supermarket"](around:3000,'+la+','+lo+'););out center 25;';
+overpass(q,0).then(function(d){
 var arr=(d.elements||[]).map(function(e){var y=e.lat!=null?e.lat:(e.center&&e.center.lat),x=e.lon!=null?e.lon:(e.center&&e.center.lon);return{name:(e.tags&&(e.tags.name||e.tags.brand))||"Supermarket",lat:y,lon:x,d:dist(la,lo,y,x)}}).filter(function(s){return s.lat!=null&&s.lon!=null}).sort(function(a,b){return a.d-b.d}).slice(0,12);
 nearby=arr.map(function(s){return s.name.toLowerCase()});
 ul.textContent="";
@@ -90,8 +125,9 @@ arr.forEach(function(s){var li=el("li"),tx=el("div"),a=el("a","",t("route"));
 tx.appendChild(el("div","",s.name));tx.appendChild(el("small","",s.d.toFixed(1)+" km"));li.appendChild(tx);
 a.href="https://www.google.com/maps/dir/?api=1&destination="+s.lat+","+s.lon;a.target="_blank";a.rel="noopener noreferrer";li.appendChild(a);ul.appendChild(li)});
 if(current)showProduct(current)})
-.catch(function(){ul.textContent="";ul.appendChild(el("li","",t("neterr")))})
-},function(){ul.textContent="";ul.appendChild(el("li","",t("locDenied")))},{enableHighAccuracy:true,timeout:15000})}
+.catch(function(e){ul.textContent="";var li=el("li","err",errText(e)+" "),a=el("a","",t("openMaps"));
+a.href="https://www.google.com/maps/search/supermarket/@"+la+","+lo+",14z";a.target="_blank";a.rel="noopener noreferrer";li.appendChild(a);ul.appendChild(li)})
+},function(){ul.textContent="";ul.appendChild(el("li","",t("locDenied")))},{enableHighAccuracy:false,timeout:20000,maximumAge:60000})}
 function stopScan(){scanning=false;clearInterval(timer);if(stream){stream.getTracks().forEach(function(tr){tr.stop()});stream=null}var v=$("cam");v.hidden=true;v.srcObject=null;$("scan").textContent=t("scan")}
 function startScan(){
 if(scanning){stopScan();return}
@@ -114,6 +150,10 @@ $("go").onclick=go;
 $("q").addEventListener("keydown",function(e){if(e.key==="Enter")go()});
 $("scan").onclick=startScan;
 $("loc").onclick=locate;
+$("tab-scan").onclick=function(){setView("scan");window.scrollTo(0,0)};
+$("tab-hist").onclick=function(){setView("hist");window.scrollTo(0,0)};
+$("tab-fav").onclick=function(){setView("fav");window.scrollTo(0,0)};
+$("histClear").onclick=function(){save("hist",[]);renderList("hist","histList")};
 $("lang").onchange=function(){lang=this.value;applyLang();if(current)showProduct(current)};
 applyLang();
 })();
