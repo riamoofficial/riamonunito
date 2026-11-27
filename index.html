@@ -1,387 +1,64 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Riamo Nunito – Scanner alimentaire</title>
-<meta name="description" content="Riamo Nunito scanne vos produits, donne un verdict clair et propose de meilleures alternatives. Données Open Food Facts.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231f8a5b'/%3E%3Cpath d='M18 46C18 28 28 18 46 18 46 36 36 46 18 46Z' fill='%23fff'/%3E%3Cpath d='M20 44L36 28' stroke='%231f8a5b' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
-<link rel="manifest" href="/manifest.webmanifest">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Riamo Nunito</title>
+<meta name="description" content="Nutri-Score, additifs, allergènes et meilleures alternatives.">
 <meta name="theme-color" content="#1f8a5b">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#f6faf7;--card:#fff;--ink:#17261d;--mut:#5c6f63;--line:#dfe9e2;--g:#1f8a5b;--gl:#7cc242;--am:#e08a00;--r:#d33a2c;--gbg:#e3f5ea;--abg:#fff1d6;--rbg:#fde4e1}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Inter,system-ui,sans-serif}
-h1,h2,h3,button,.badge,.nun{font-family:Nunito,sans-serif}
-.num{font-variant-numeric:tabular-nums}
-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-nav{display:flex;gap:4px;overflow-x:auto;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line)}
-nav button{border:0;background:none;padding:8px 14px;border-radius:99px;font-weight:700;font-size:15px;color:var(--mut);cursor:pointer;white-space:nowrap}
-nav button.on{background:var(--gbg);color:var(--g)}
-main{max-width:760px;margin:0 auto;padding:16px}
-section{display:none}section.on{display:block}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
-.btn{border:0;background:var(--g);color:#fff;font-weight:800;font-size:16px;padding:12px 18px;border-radius:12px;cursor:pointer}
-.btn.sec{background:var(--gbg);color:var(--g)}
-.btn.sm{padding:7px 12px;font-size:14px}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gl);outline-offset:2px}
-input[type=text],input[type=search]{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font:inherit}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.row>input{flex:1;min-width:140px}
-video{width:100%;border-radius:14px;background:#000;max-height:300px;object-fit:cover}
-.msg{color:var(--mut);font-size:14px;margin:8px 0}
-.err{color:var(--r);font-weight:600}
-.list{display:grid;gap:10px}
-.item{display:flex;gap:12px;align-items:center;cursor:pointer}
-.item img,.hero img{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#fff;border:1px solid var(--line);flex:none}
-.item b{display:block;line-height:1.25}
-.item small{color:var(--mut)}
-.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-weight:800;font-size:13px;margin:2px 4px 2px 0}
-.ok{background:var(--gbg);color:#136b43}.mid{background:var(--abg);color:#8a5200}.bad{background:var(--rbg);color:#a22418}.na{background:#eceff0;color:#555}
-.verdict{border-radius:16px;padding:14px;margin:12px 0}
-.verdict h2{margin:0;font-size:28px;font-weight:900}
-.verdict .sc{float:right;font:900 34px Nunito;text-align:right}
-.verdict ul{margin:8px 0 0;padding-left:18px;font-size:14px}
-.hero{display:flex;gap:14px;align-items:center}
-.hero img{width:110px;height:110px}
-.hero h1{margin:0;font-size:22px;font-weight:800;line-height:1.2}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-td.n{font-variant-numeric:tabular-nums}
-.scroll{overflow-x:auto}
-.alt{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
-.alt .card{min-width:170px;max-width:170px;margin:0;font-size:14px}
-.alt img{width:100%;height:90px;object-fit:contain}
-.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
-.chk label{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff}
-details{margin:8px 0}summary{font-weight:700;cursor:pointer}
-.ing{font-size:14px;color:#33463a}
-@media(prefers-reduced-motion:no-preference){.verdict{transition:transform .2s}}
-.soc{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.soc a{padding:8px 14px;border-radius:99px;background:var(--gbg);color:var(--g);font:800 14px Nunito,sans-serif;text-decoration:none}.soc a:hover{background:var(--g);color:#fff}footer{max-width:760px;margin:0 auto;padding:8px 16px 28px;text-align:center;color:var(--mut);font-size:13px}footer .soc{justify-content:center}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header>
-  <svg height="38" viewBox="0 0 270 48" role="img" aria-label="Riamo Nunito">
-    <rect x="2" y="4" width="40" height="40" rx="11" fill="#1f8a5b"/>
-    <path d="M12 34C12 21 19 13 33 13 33 27 26 34 12 34Z" fill="#fff"/>
-    <path d="M13.5 32.5L26 20" stroke="#1f8a5b" stroke-width="2.4" stroke-linecap="round"/>
-    <path d="M6 8v-0M6 8h7M36 8h0" stroke="#7cc242" stroke-width="0"/>
-    <text x="52" y="35" font-family="Nunito,sans-serif" font-weight="900" font-size="32" fill="#17261d" letter-spacing="-.5">Riamo <tspan fill="#1f8a5b">Nunito</tspan></text>
-  </svg>
-  <span class="msg" style="margin:0">Données Open Food Facts</span>
+<header class="top">
+<div class="brand">
+<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1f8a5b"/><g fill="#fff"><rect x="11" y="10" width="2" height="30"/><rect x="15" y="10" width="1" height="30"/><rect x="18" y="10" width="3" height="30"/><rect x="23" y="10" width="1" height="30"/><rect x="26" y="10" width="2" height="30"/><rect x="30" y="10" width="3" height="30"/><rect x="35" y="10" width="1" height="30"/><rect x="38" y="10" width="2" height="30"/><rect x="42" y="10" width="1" height="30"/><rect x="45" y="10" width="3" height="30"/><rect x="50" y="10" width="2" height="30"/></g><text x="32" y="54" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" textLength="50" lengthAdjust="spacingAndGlyphs">RIAMO NUNITO</text></svg>
+<span>Riamo <b>Nunito</b></span>
+</div>
+<select id="lang" aria-label="Langue">
+<option value="fr">Français</option>
+<option value="en">English</option>
+<option value="ar">العربية</option>
+<option value="es">Español</option>
+</select>
 </header>
-<nav id="nav">
-  <button data-v="scan" class="on">Scanner</button>
-  <button data-v="cmp">Comparer <span id="cc"></span></button>
-  <button data-v="fav">Favoris</button>
-  <button data-v="hist">Historique</button>
-  <button data-v="prof">Mon profil</button>
-  <button data-v="priv">Confidentialité</button>
-  <button data-v="about">À propos</button>
-</nav>
 <main>
-<section id="scan" class="on">
-  <div class="card">
-    <video id="vid" playsinline muted hidden></video>
-    <div class="row" style="margin-top:8px">
-      <button class="btn" id="camOn">Activer la caméra</button>
-      <button class="btn sec" id="camOff" hidden>Arrêter la caméra</button>
-      <button class="btn sec" id="flip" hidden>Changer de caméra</button>
-    </div>
-    <div id="camMsg" class="msg">Placez le code-barres devant la caméra, ou saisissez-le ci-dessous.</div>
-    <form id="fc" class="row"><input type="text" id="code" inputmode="numeric" placeholder="Code-barres (ex. 3017620422003)" aria-label="Code-barres"><button class="btn">Chercher</button></form>
-    <form id="fs" class="row" style="margin-top:8px"><input type="search" id="kw" placeholder="Mot-clé (ex. yaourt nature)" aria-label="Mot-clé"><button class="btn sec">Rechercher</button></form>
-    <div class="row" style="margin-top:8px"><span class="msg">Tests rapides :</span>
-      <button class="btn sec sm" data-c="3017620422003">Pâte à tartiner</button>
-      <button class="btn sec sm" data-c="5449000000996">Soda cola</button>
-      <button class="btn sec sm" data-k="pâtes complètes">Pâtes complètes</button>
-    </div>
-  </div>
-  <div id="res" class="list"></div>
-  <div id="detail"></div>
-</section>
-<section id="cmp"><div id="cmpBox"></div></section>
-<section id="fav"><div id="favBox" class="list"></div></section>
-<section id="hist"><div class="row" style="margin-bottom:10px"><button class="btn sec sm" id="clrH">Vider l’historique</button></div><div id="histBox" class="list"></div></section>
-<section id="prof">
-  <div class="card"><h2 style="margin-top:0">Alertes allergènes</h2>
-    <p class="msg">Cochez ce qui vous concerne : Riamo affichera <b>À éviter</b> si un produit en contient ou peut en contenir des traces.</p>
-    <div class="chk" id="algBox"></div>
-  </div>
-  <div class="card"><h2 style="margin-top:0">Régime</h2>
-    <div class="chk"><label><input type="checkbox" id="dVeg"> Végétarien (alerte si viande/poisson détecté)</label></div>
-  </div>
-</section>
-<section id="about">
-  <div class="card ing">
-    <h2 style="margin-top:0">À propos de Riamo Nunito</h2>
-    <p>Riamo Nunito (riamonunito.pages.dev) est un scanner et comparateur alimentaire gratuit. Les données viennent d’<b>Open Food Facts</b>, base collaborative sous licence <b>ODbL</b> (© contributeurs Open Food Facts). Elles peuvent être incomplètes ou erronées.</p>
-    <h3>Méthodologie du verdict</h3>
-    <ul>
-      <li><b>À éviter</b> : allergène ou trace de votre profil, produit ultra-transformé (NOVA 4), ou Nutri-Score D/E.</li>
-      <li><b>À valider</b> : Score Riamo ≥ 70 et NOVA 1 à 3.</li>
-      <li><b>À surveiller</b> : tous les autres cas, ou données insuffisantes.</li>
-      <li><b>Score Riamo (0–100)</b> : Nutri-Score (A=90, B=75, C=55, D=35, E=15, inconnu=50), puis NOVA (1: +5, 3: −5, 4: −20) et additifs (−2 par additif, max −10).</li>
-    </ul>
-    <p>Riamo Nunito s’inspire de l’approche de Yuka (verdict rapide, alternatives), d’UFC-Que Choisir (additifs, allergènes) et de ScanUp (transformation, impact), sans utiliser leurs données : elles n’ont pas d’API publique ouverte.</p>
-    <h3>Qui sommes-nous ?</h3>
-    <p>Riamo Nunito est un projet indépendant qui aide à mieux lire les étiquettes alimentaires : un scan, un verdict clair, des alternatives. Retrouvez-nous et écrivez-nous sur nos réseaux :</p>
-    <div class="soc">
-<a href="https://www.youtube.com/@Riamonunito" target="_blank" rel="noopener noreferrer">YouTube</a>
-<a href="https://www.instagram.com/riamonunito" target="_blank" rel="noopener noreferrer">Instagram</a>
-<a href="https://www.facebook.com/share/1HiavQykJR/" target="_blank" rel="noopener noreferrer">Facebook</a>
-<a href="https://www.tiktok.com/@riamo.nunito" target="_blank" rel="noopener noreferrer">TikTok</a>
-<a href="https://www.snapchat.com/add/riamonunito" target="_blank" rel="noopener noreferrer">Snapchat</a>
-<a href="https://www.snapchat.com/add/riamonunito" target="_blank" rel="noopener noreferrer">Snapchat</a>
+<section class="card">
+<h1 data-i18n="title"></h1>
+<div class="row">
+<input id="q" type="search" inputmode="search" autocomplete="off" data-i18n-ph="ph">
+<button id="go" class="btn" data-i18n="search"></button>
 </div>
-    <p class="err">Allergies sévères : aucun outil numérique ne remplace la lecture de l’étiquette sur l’emballage physique. En cas de doute, ne consommez pas le produit.</p>
-  </div>
+<button id="scan" class="btn alt"></button>
+<video id="cam" playsinline muted hidden></video>
+<p id="msg" class="msg" role="status"></p>
 </section>
-<section id="priv">
-  <div class="card ing">
-    <h2 style="margin-top:0">Confidentialité</h2>
-    <ul>
-      <li><b>Pas de compte, pas de serveur Riamo Nunito.</b> Nous ne collectons ni nom, ni e-mail, ni localisation.</li>
-      <li><b>Vos données restent sur votre appareil</b> : historique, favoris, comparateur et profil (allergènes, régime) sont enregistrés dans le stockage local de votre navigateur (<i>localStorage</i>). Nous n’y avons pas accès.</li>
-      <li><b>La caméra</b> sert uniquement à lire les codes-barres, directement dans votre navigateur. Aucune image ni vidéo n’est enregistrée ou envoyée.</li>
-      <li><b>Services tiers :</b> pour afficher un produit, votre navigateur interroge <b>Open Food Facts</b> (le code-barres ou le mot-clé recherché et votre adresse IP lui sont transmis ; voir sa politique de confidentialité). Les polices <b>Google Fonts</b> sont chargées depuis Google, qui voit aussi votre adresse IP. L’hébergement est assuré par <b>Cloudflare Pages</b>, qui peut conserver des journaux techniques standard.</li>
-      <li><b>Aucune publicité, aucun traceur, aucun cookie</b> de notre part.</li>
-      <li><b>Vos droits :</b> vous pouvez effacer toutes vos données à tout moment.</li>
-    </ul>
-    <button class="btn sec" id="wipe">Effacer toutes mes données</button>
-    <h2>Sécurité</h2>
-    <ul>
-      <li>Connexion chiffrée (HTTPS) obligatoire, y compris pour la caméra.</li>
-      <li>Politique de sécurité du contenu (CSP) et en-têtes de protection : seules les sources nécessaires (Open Food Facts, Google Fonts) sont autorisées.</li>
-      <li>Les textes provenant d’Open Food Facts sont systématiquement échappés avant affichage, pour éviter l’injection de code.</li>
-      <li>Nous ne demandons jamais de mot de passe ni de moyen de paiement. Méfiez-vous de tout faux profil : nos comptes officiels sont ceux listés ci-dessous.</li>
-    </ul>
-    <h3>Nos réseaux officiels</h3>
-    <div class="soc">
-<a href="https://www.youtube.com/@Riamonunito" target="_blank" rel="noopener noreferrer">YouTube</a>
-<a href="https://www.instagram.com/riamonunito" target="_blank" rel="noopener noreferrer">Instagram</a>
-<a href="https://www.facebook.com/share/1HiavQykJR/" target="_blank" rel="noopener noreferrer">Facebook</a>
-<a href="https://www.tiktok.com/@riamo.nunito" target="_blank" rel="noopener noreferrer">TikTok</a>
-<a href="https://www.snapchat.com/add/riamonunito" target="_blank" rel="noopener noreferrer">Snapchat</a>
-<a href="https://www.snapchat.com/add/riamonunito" target="_blank" rel="noopener noreferrer">Snapchat</a>
-</div>
-    <p class="msg">Dernière mise à jour : novembre 2026. Les informations nutritionnelles sont indicatives et ne remplacent ni l’étiquette de l’emballage ni un avis médical.</p>
-  </div>
+<section id="results" class="card" hidden></section>
+<section id="product" hidden></section>
+<section class="card">
+<h2 data-i18n="storesTitle"></h2>
+<button id="loc" class="btn alt" data-i18n="storesBtn"></button>
+<ul id="stores" class="list"></ul>
 </section>
 </main>
-<footer><b class="nun">Riamo Nunito</b> · riamonunito.pages.dev<div class="soc">
+<footer>
+<p><b>Riamo Nunito</b> · riamonunito.pages.dev</p>
+<nav class="soc">
 <a href="https://www.youtube.com/@Riamonunito" target="_blank" rel="noopener noreferrer">YouTube</a>
 <a href="https://www.instagram.com/riamonunito" target="_blank" rel="noopener noreferrer">Instagram</a>
 <a href="https://www.facebook.com/share/1HiavQykJR/" target="_blank" rel="noopener noreferrer">Facebook</a>
 <a href="https://www.tiktok.com/@riamo.nunito" target="_blank" rel="noopener noreferrer">TikTok</a>
 <a href="https://www.snapchat.com/add/riamonunito" target="_blank" rel="noopener noreferrer">Snapchat</a>
-<a href="https://www.snapchat.com/add/riamonunito" target="_blank" rel="noopener noreferrer">Snapchat</a>
-</div>Données © contributeurs Open Food Facts (ODbL)</footer>
-<script>
-"use strict";
-const API="https://world.openfoodfacts.org";
-const FIELDS="code,product_name,brands,quantity,image_front_url,image_front_small_url,image_url,categories_tags,ingredients_text,allergens_tags,traces_tags,additives_tags,nutriments,nutrition_grades,nova_group,ecoscore_grade,ingredients_analysis_tags";
-const $=s=>document.querySelector(s);
-const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const LS={get(k,d){try{return JSON.parse(localStorage.getItem("riamo_"+k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem("riamo_"+k,JSON.stringify(v))}catch(e){}}};
-let hist=LS.get("hist",[]),fav=LS.get("fav",[]),cmp=LS.get("cmp",[]),alg=LS.get("alg",[]),veg=LS.get("veg",false);
-let cache={},stream=null,timer=null,facing="environment";
-
-const PH='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="18" fill="#e3f5ea"/><path d="M34 82C34 52 50 36 86 36 86 66 70 82 34 82Z" fill="#1f8a5b"/><path d="M38 78L66 50" stroke="#e3f5ea" stroke-width="4" stroke-linecap="round"/></svg>');
-const imgOf=p=>p.image_front_small_url||p.image_front_url||p.image_url||PH;
-const imgTag=(p,big)=>`<img src="${esc(big?(p.image_front_url||imgOf(p)):imgOf(p))}" alt="${esc(p.product_name||'Produit')}" loading="lazy" onerror="this.onerror=null;this.src='${PH}'">`;
-
-const ALG=[["gluten","Gluten"],["milk","Lait"],["eggs","Œufs"],["peanuts","Arachides"],["nuts","Fruits à coque"],["soybeans","Soja"],["fish","Poisson"],["crustaceans","Crustacés"],["sesame-seeds","Sésame"],["celery","Céleri"],["mustard","Moutarde"],["sulphur-dioxide-and-sulphites","Sulfites"]];
-const GRADE={a:90,b:75,c:55,d:35,e:15};
-const nm=p=>p.product_name||"Produit sans nom";
-const num=(p,k)=>{const v=p.nutriments&&p.nutriments[k+"_100g"];return typeof v==="number"?v:(v!=null&&!isNaN(parseFloat(v))?parseFloat(v):null)};
-const fmt=v=>v==null?"–":(Math.round(v*10)/10).toString().replace(".",",");
-const tag=t=>String(t).replace(/^[a-z]{2}:/,"");
-
-function verdict(p){
-  const g=(p.nutrition_grades||"").toLowerCase(),nova=parseInt(p.nova_group)||0;
-  const adds=(p.additives_tags||[]).length,reasons=[];let bad=false,mid=false;
-  let s=GRADE[g]!=null?GRADE[g]:50;
-  if(nova===1)s+=5;if(nova===3)s-=5;if(nova===4)s-=20;
-  s-=Math.min(10,adds*2);s=Math.max(0,Math.min(100,Math.round(s)));
-  const hit=[...(p.allergens_tags||[]),...(p.traces_tags||[])].map(tag).filter(t=>alg.includes(t));
-  if(hit.length){bad=true;reasons.push("Alerte allergène de votre profil : "+[...new Set(hit)].join(", "))}
-  if(veg&&(p.ingredients_analysis_tags||[]).some(t=>/non-vegetarian$/.test(t))){bad=true;reasons.push("Produit non végétarien selon l’analyse des ingrédients")}
-  if(nova===4){bad=true;reasons.push("Ultra-transformé (NOVA 4)")}
-  if(g==="d"||g==="e"){bad=true;reasons.push("Nutri-Score "+g.toUpperCase()+" : profil nutritionnel défavorable")}
-  if(!g){mid=true;reasons.push("Nutri-Score indisponible : données insuffisantes")}
-  if(!nova){reasons.push("Groupe NOVA inconnu")}
-  if(adds)reasons.push(adds+" additif"+(adds>1?"s":"")+" détecté"+(adds>1?"s":""));
-  if(g==="a"||g==="b")reasons.push("Bon profil nutritionnel (Nutri-Score "+g.toUpperCase()+")");
-  if(nova&&nova<=2)reasons.push("Faible transformation (NOVA "+nova+")");
-  if(bad)return{k:"bad",label:"À ÉVITER",s,reasons};
-  if(s>=70&&nova<=3&&!mid)return{k:"ok",label:"À VALIDER",s,reasons};
-  if(!reasons.length)reasons.push("Profil moyen");
-  return{k:"mid",label:"À SURVEILLER",s,reasons};
-}
-const badgeGrade=g=>g?`<span class="badge ${{a:'ok',b:'ok',c:'mid',d:'bad',e:'bad'}[g]||'na'}">Nutri-Score ${esc(g.toUpperCase())}</span>`:`<span class="badge na">Nutri-Score ?</span>`;
-const badgeNova=n=>n?`<span class="badge ${n<=2?'ok':n==3?'mid':'bad'}">NOVA ${n}</span>`:`<span class="badge na">NOVA ?</span>`;
-const badgeV=v=>`<span class="badge ${v.k}">${v.label}</span>`;
-
-async function api(url){
-  const r=await fetch(url,{headers:{"Accept":"application/json"}});
-  if(!r.ok)throw new Error("Réponse "+r.status);return r.json();
-}
-async function getProduct(code){
-  if(cache[code])return cache[code];
-  const d=await api(`${API}/api/v2/product/${encodeURIComponent(code)}.json?app_name=RiamoNunito&fields=${FIELDS}`);
-  if(d.status!==1||!d.product)throw new Error("Produit introuvable dans Open Food Facts.");
-  d.product.code=d.product.code||code;cache[code]=d.product;return d.product;
-}
-function item(p,extra){
-  cache[p.code]=cache[p.code]||p;const v=verdict(p);
-  return `<div class="card item" data-open="${esc(p.code)}">${imgTag(p)}<div><b>${esc(nm(p))}</b><small>${esc(p.brands||"Marque inconnue")}</small><div>${badgeV(v)}${badgeGrade((p.nutrition_grades||"").toLowerCase())}${badgeNova(parseInt(p.nova_group)||0)}</div></div>${extra||""}</div>`;
-}
-async function search(q){
-  const box=$("#res");$("#detail").innerHTML="";box.innerHTML='<p class="msg">Recherche en cours…</p>';
-  try{
-    const d=await api(`${API}/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=12&app_name=RiamoNunito&fields=${FIELDS}`);
-    const ps=(d.products||[]).filter(p=>p.code);
-    box.innerHTML=ps.length?ps.map(p=>item(p)).join(""):'<p class="msg">Aucun résultat. Essayez un autre mot-clé.</p>';
-  }catch(e){box.innerHTML=`<p class="err">Recherche impossible : ${esc(e.message)}. Vérifiez votre connexion.</p>`}
-}
-async function open(code){
-  show("scan");const box=$("#detail");$("#res").innerHTML="";
-  box.innerHTML='<p class="msg">Chargement du produit…</p>';scrollTo({top:0});
-  try{
-    const p=await getProduct(code);
-    hist=[code,...hist.filter(c=>c!==code)].slice(0,30);LS.set("hist",hist);
-    render(p);alts(p);
-  }catch(e){box.innerHTML=`<div class="card"><p class="err">${esc(e.message)}</p><p class="msg">Vérifiez le code ou essayez la recherche par mot-clé.</p></div>`}
-}
-function render(p){
-  const v=verdict(p),isF=fav.includes(p.code),inC=cmp.includes(p.code);
-  const cls={ok:"ok",mid:"mid",bad:"bad"}[v.k];
-  const rows=[["Énergie","energy-kcal"," kcal"],["Matières grasses","fat"," g"],["dont saturées","saturated-fat"," g"],["Sucres","sugars"," g"],["Fibres","fiber"," g"],["Protéines","proteins"," g"],["Sel","salt"," g"]];
-  const a=[...(p.allergens_tags||[])].map(tag),t=[...(p.traces_tags||[])].map(tag);
-  $("#detail").innerHTML=`
-  <div class="card hero">${imgTag(p,1)}<div><h1>${esc(nm(p))}</h1><div class="msg" style="margin:2px 0">${esc(p.brands||"")} ${esc(p.quantity||"")}</div>${badgeGrade((p.nutrition_grades||"").toLowerCase())}${badgeNova(parseInt(p.nova_group)||0)}${p.ecoscore_grade&&p.ecoscore_grade!=="unknown"&&p.ecoscore_grade!=="not-applicable"?`<span class="badge na">Eco-Score ${esc(String(p.ecoscore_grade).toUpperCase())}</span>`:""}</div></div>
-  <div class="verdict ${cls}"><span class="sc num">${v.s}<small style="font-size:14px">/100</small><br><small style="font-size:12px;font-weight:700">Score Riamo</small></span><h2>${v.label}</h2><ul>${v.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>
-  <div class="row" style="margin-bottom:14px"><button class="btn sec sm" data-fav="${esc(p.code)}">${isF?"★ Retirer des favoris":"☆ Ajouter aux favoris"}</button><button class="btn sec sm" data-cmp="${esc(p.code)}">${inC?"Retirer du comparateur":"Comparer"}</button></div>
-  <div class="card"><h3 style="margin-top:0">Valeurs pour 100 g</h3><table class="ing"><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td class="n">${fmt(num(p,r[1]))}${num(p,r[1])==null?"":r[2]}</td></tr>`).join("")}</tbody></table></div>
-  <div class="card ing"><h3 style="margin-top:0">Ingrédients, allergènes, additifs</h3>
-  <p><b>Ingrédients :</b> ${esc(p.ingredients_text||"non renseignés")}</p>
-  <p><b>Allergènes :</b> ${a.length?esc(a.join(", ")):"aucun déclaré"}</p>
-  <p><b>Traces possibles :</b> ${t.length?esc(t.join(", ")):"aucune déclarée"}</p>
-  <p><b>Additifs :</b> ${(p.additives_tags||[]).length?esc(p.additives_tags.map(x=>tag(x).toUpperCase()).join(", ")):"aucun détecté"}</p></div>
-  <div class="card"><h3 style="margin-top:0">Alternatives mieux notées</h3><div id="alts" class="msg">Recherche d’alternatives…</div></div>
-  <p class="msg">Lisez toujours l’étiquette physique, surtout en cas d’allergie. Source : Open Food Facts (ODbL).</p>`;
-}
-async function alts(p){
-  const box=()=>$("#alts");
-  const cats=(p.categories_tags||[]).filter(c=>/^en:/.test(c));
-  if(!cats.length){box().textContent="Catégorie inconnue : pas d’alternatives automatiques.";return}
-  const cur=verdict(p).s;
-  try{
-    for(const c of cats.slice().reverse().slice(0,3)){
-      const d=await api(`${API}/api/v2/search?categories_tags=${encodeURIComponent(c)}&nutrition_grades_tags=a,b,c&sort_by=unique_scans_n&page_size=24&app_name=RiamoNunito&fields=${FIELDS}`);
-      let l=(d.products||[]).filter(x=>x.code&&x.code!==p.code&&x.product_name).map(x=>({x,v:verdict(x)})).filter(o=>o.v.s>cur&&o.v.k!=="bad").sort((a,b)=>b.v.s-a.v.s).slice(0,8);
-      if(l.length){
-        if(!box())return;
-        box().className="alt";
-        box().innerHTML=l.map(o=>{cache[o.x.code]=o.x;return `<div class="card" data-open="${esc(o.x.code)}" style="cursor:pointer">${imgTag(o.x)}<b>${esc(nm(o.x))}</b><br>${badgeV(o.v)}${badgeGrade((o.x.nutrition_grades||"").toLowerCase())}<div class="msg num" style="margin:2px 0">Score ${o.v.s}/100</div><button class="btn sec sm" data-cmp="${esc(o.x.code)}">Comparer</button></div>`}).join("");
-        return;
-      }
-    }
-    if(box())box().textContent="Aucune alternative mieux notée trouvée dans cette catégorie.";
-  }catch(e){if(box())box().innerHTML='<span class="err">Alternatives indisponibles pour le moment.</span>'}
-}
-
-/* Listes */
-async function fill(el,codes,empty){
-  if(!codes.length){el.innerHTML=`<p class="msg">${empty}</p>`;return}
-  el.innerHTML='<p class="msg">Chargement…</p>';
-  const ps=await Promise.all(codes.map(c=>getProduct(c).catch(()=>({code:c,product_name:"Produit indisponible"}))));
-  el.innerHTML=ps.map(p=>item(p)).join("");
-}
-function renderCmp(){
-  $("#cc").textContent=cmp.length?`(${cmp.length})`:"";
-  const el=$("#cmpBox");
-  if(!cmp.length){el.innerHTML='<p class="msg">Ajoutez jusqu’à 3 produits avec le bouton « Comparer ».</p>';return}
-  el.innerHTML='<p class="msg">Chargement…</p>';
-  Promise.all(cmp.map(c=>getProduct(c).catch(()=>({code:c,product_name:"Indisponible"})))).then(ps=>{
-    const m=[["Énergie (kcal)","energy-kcal"],["Sucres (g)","sugars"],["Graisses saturées (g)","saturated-fat"],["Sel (g)","salt"],["Fibres (g)","fiber"],["Protéines (g)","proteins"]];
-    el.innerHTML=`<div class="card scroll"><table><thead><tr><th></th>${ps.map(p=>`<th>${imgTag(p)}<br>${esc(nm(p))}<br><button class="btn sec sm" data-cmp="${esc(p.code)}">Retirer</button></th>`).join("")}</tr></thead><tbody>
-    <tr><td>Verdict</td>${ps.map(p=>`<td>${badgeV(verdict(p))}<div class="num">${verdict(p).s}/100</div></td>`).join("")}</tr>
-    <tr><td>Nutri-Score</td>${ps.map(p=>`<td>${badgeGrade((p.nutrition_grades||"").toLowerCase())}</td>`).join("")}</tr>
-    <tr><td>NOVA</td>${ps.map(p=>`<td>${badgeNova(parseInt(p.nova_group)||0)}</td>`).join("")}</tr>
-    ${m.map(r=>`<tr><td>${r[0]}</td>${ps.map(p=>`<td class="n">${fmt(num(p,r[1]))}</td>`).join("")}</tr>`).join("")}
-    </tbody></table></div>`;
-  });
-}
-
-/* Navigation */
-function show(v){
-  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===v));
-  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
-  if(v==="cmp")renderCmp();
-  if(v==="fav")fill($("#favBox"),fav,"Aucun favori pour l’instant.");
-  if(v==="hist")fill($("#histBox"),hist,"Aucun produit consulté.");
-  if(v!=="scan")stopCam();
-}
-document.addEventListener("click",e=>{
-  const t=e.target.closest("button,[data-open]");if(!t)return;
-  if(t.dataset.v)return show(t.dataset.v);
-  if(t.dataset.fav){const c=t.dataset.fav;fav=fav.includes(c)?fav.filter(x=>x!==c):[c,...fav];LS.set("fav",fav);const p=cache[c];if(p)render(p),alts(p);return}
-  if(t.dataset.cmp){e.stopPropagation();const c=t.dataset.cmp;
-    if(cmp.includes(c))cmp=cmp.filter(x=>x!==c);else if(cmp.length>=3){alert("3 produits maximum. Retirez-en un d’abord.");return}else cmp.push(c);
-    LS.set("cmp",cmp);$("#cc").textContent=cmp.length?`(${cmp.length})`:"";
-    if($("#cmp").classList.contains("on"))renderCmp();else if($("#detail").innerHTML&&cache[c]&&$("#detail .hero")){const cur=$("#detail [data-fav]");if(cur&&cur.dataset.fav===c){const b=$("#detail [data-cmp]");b.textContent=cmp.includes(c)?"Retirer du comparateur":"Comparer"}else{t.textContent=cmp.includes(c)?"Retiré/ajouté ✓":"Comparer"}}
-    return}
-  if(t.dataset.open)return open(t.dataset.open);
-  if(t.dataset.c)return open(t.dataset.c);
-  if(t.dataset.k){$("#kw").value=t.dataset.k;return search(t.dataset.k)}
-});
-$("#fc").onsubmit=e=>{e.preventDefault();const c=$("#code").value.replace(/\D/g,"");if(c.length<8){$("#camMsg").innerHTML='<span class="err">Un code-barres comporte 8 à 13 chiffres.</span>';return}open(c)};
-$("#fs").onsubmit=e=>{e.preventDefault();const q=$("#kw").value.trim();if(q)search(q)};
-$("#wipe").onclick=()=>{if(confirm("Effacer historique, favoris, comparateur et profil ?")){try{Object.keys(localStorage).filter(k=>k.indexOf("riamo_")===0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}};
-$("#clrH").onclick=()=>{hist=[];LS.set("hist",hist);show("hist")};
-
-/* Profil */
-$("#algBox").innerHTML=ALG.map(a=>`<label><input type="checkbox" value="${a[0]}" ${alg.includes(a[0])?"checked":""}> ${a[1]}</label>`).join("");
-$("#algBox").onchange=()=>{alg=[...document.querySelectorAll("#algBox input:checked")].map(i=>i.value);LS.set("alg",alg)};
-$("#dVeg").checked=veg;$("#dVeg").onchange=e=>{veg=e.target.checked;LS.set("veg",veg)};
-
-/* Caméra */
-async function startCam(){
-  const m=$("#camMsg");
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){m.innerHTML='<span class="err">Caméra indisponible (HTTPS requis). Utilisez la saisie manuelle.</span>';return}
-  try{
-    stopCam();
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing}},audio:false});
-    const v=$("#vid");v.srcObject=stream;v.hidden=false;await v.play();
-    $("#camOn").hidden=true;$("#camOff").hidden=false;$("#flip").hidden=false;
-    if(!("BarcodeDetector" in window)){m.innerHTML="Ce navigateur ne lit pas les codes-barres automatiquement. Saisissez le code ci-dessous (Chrome Android le supporte).";return}
-    const det=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]});
-    m.textContent="Caméra active : cadrez le code-barres.";
-    timer=setInterval(async()=>{
-      try{const r=await det.detect(v);if(r.length){const c=r[0].rawValue;stopCam();$("#code").value=c;open(c)}}catch(e){}
-    },350);
-  }catch(e){
-    const n=e&&e.name;
-    m.innerHTML='<span class="err">'+(n==="NotAllowedError"?"Accès à la caméra refusé. Autorisez-la dans les réglages du navigateur puis réessayez.":n==="NotFoundError"?"Aucune caméra détectée.":"Impossible d’ouvrir la caméra : "+esc(e.message))+"</span>";
-  }
-}
-function stopCam(){
-  clearInterval(timer);timer=null;
-  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
-  const v=$("#vid");v.srcObject=null;v.hidden=true;
-  $("#camOn").hidden=false;$("#camOff").hidden=true;$("#flip").hidden=true;
-}
-$("#camOn").onclick=startCam;$("#camOff").onclick=()=>{stopCam();$("#camMsg").textContent="Caméra arrêtée."};
-$("#flip").onclick=()=>{facing=facing==="environment"?"user":"environment";startCam()};
-$("#cc").textContent=cmp.length?`(${cmp.length})`:"";
-</script>
-<script src="/pwa.js"></script>
+</nav>
+<p class="small" data-i18n="credits"></p>
+</footer>
+<script src="/i18n.js" charset="utf-8"></script>
+<script src="/app.js" charset="utf-8"></script>
+<script src="/pwa.js" charset="utf-8"></script>
 </body>
 </html>
