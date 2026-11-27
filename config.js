@@ -1,1 +1,1 @@
-var WEB3KEY="COLLE-ICI-TA-CLE";
+var WEB3KEY="TA-CLE";
