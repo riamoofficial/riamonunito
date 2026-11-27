@@ -13,8 +13,8 @@ function get(){try{return localStorage.getItem(K)}catch(e){return null}}
 function set(v){try{localStorage.setItem(K,v)}catch(e){}}
 function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e}
 function loadAd(){
-if(document.getElementById("monetag-ad"))return;
-var s=document.createElement("script");s.id="monetag-ad";s.dataset.zone=ZONE;s.src=SRC;document.body.appendChild(s)}
+if(window.__ads)return;window.__ads=1;
+[["12369012","https://n6wxm.com/vignette.min.js"],["12369018","https://nap5k.com/tag.min.js"]].forEach(function(z){var s=document.createElement("script");s.dataset.zone=z[0];s.src=z[1];document.body.appendChild(s)})}
 var bar=el("div","consent"),tx=el("p"),row=el("div"),y=el("button","btn"),n=el("button","btn alt"),mg=el("button","btn alt"),fp=el("p");
 bar.hidden=true;
 row.appendChild(y);row.appendChild(n);bar.appendChild(tx);bar.appendChild(row);
