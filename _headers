@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.openfoodfacts.org; connect-src https://world.openfoodfacts.org https://overpass-api.de https://overpass.kumi.systems https://overpass.private.coffee https://api.web3forms.com; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://n6wxm.com https://*.n6wxm.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src https://world.openfoodfacts.org https://overpass-api.de https://overpass.kumi.systems https://overpass.private.coffee https://api.web3forms.com https://n6wxm.com https://*.n6wxm.com; frame-src https://n6wxm.com https://*.n6wxm.com; media-src 'self' blob: https:; manifest-src 'self'; worker-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY

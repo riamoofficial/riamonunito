@@ -66,3 +66,8 @@ textarea{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--bd);bo
 h3{font-size:1rem;margin:14px 0 4px}
 h4{font-size:.95rem;margin:12px 0 0}
 footer a{color:var(--gd);font-weight:600}
+.consent{position:fixed;left:12px;right:12px;bottom:92px;z-index:9;background:#fff;border:1px solid var(--bd);border-radius:16px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.consent p{margin:0 0 10px}
+.consent div{display:flex;gap:8px}
+.consent .btn{flex:1;width:auto}
+footer .btn.alt{width:auto}
