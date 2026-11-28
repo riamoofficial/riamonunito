@@ -1,2 +1,10 @@
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))}
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();const b=document.createElement('button');b.textContent='📲 Installer l’application';b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;padding:12px 18px;border:0;border-radius:999px;background:#1f8a5b;color:#fff;font:600 15px Inter,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25)';b.onclick=async()=>{e.prompt();await e.userChoice;b.remove()};document.body.appendChild(b)});
+(function(){
+var M={fr:"📴 Hors ligne",en:"📴 Offline",ar:"📴 بدون اتصال",es:"📴 Sin conexión"},b=document.createElement("div");
+b.id="offline";document.body.appendChild(b);
+function u(){b.textContent=M[document.documentElement.lang]||M.fr;b.hidden=navigator.onLine}
+addEventListener("online",u);addEventListener("offline",u);
+var l=document.getElementById("lang");if(l)l.addEventListener("change",u);
+u();
+})();
