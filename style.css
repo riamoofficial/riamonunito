@@ -71,3 +71,5 @@ footer a{color:var(--gd);font-weight:600}
 .consent div{display:flex;gap:8px}
 .consent .btn{flex:1;width:auto}
 footer .btn.alt{width:auto}
+.verdict{display:flex;align-items:center}
+.vlogo{width:28px;height:28px;border-radius:6px;margin-inline-end:10px;flex:none}

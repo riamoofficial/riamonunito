@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-var API="https://world.openfoodfacts.org",LANGS=["fr","en","ar","es"],lang="",nearby=[],nearStores=[],current=null,stream=null,timer=null,scanning=false;
+var SRC={food:"https://world.openfoodfacts.org",beauty:"https://world.openbeautyfacts.org",products:"https://world.openproductsfacts.org"},API=SRC.food,LANGS=["fr","en","ar","es"],lang="",nearby=[],nearStores=[],current=null,stream=null,timer=null,scanning=false;
 var OVP=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
 var FIELDS="code,product_name,brands,image_front_small_url,nutriscore_grade,nutrition_grades,nova_group,stores";
 function $(id){return document.getElementById(id)}
@@ -22,7 +22,7 @@ function rank(g){return g?"abcde".indexOf(g):-1}
 function slug(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")}
 function tags(arr){return(arr||[]).map(function(a){var k=a.replace(/^.*:/,""),i=ALK.indexOf(k),al=(I18N[lang]||I18N.fr).al;return i>=0&&al[i]?al[i]:k.replace(/-/g," ")}).join(", ")}
 function isNear(s){var a=String(s).toLowerCase().split(",");return nearby.some(function(n){return n.length>2&&a.some(function(x){x=x.trim();return x.length>2&&(n.indexOf(x)>-1||x.indexOf(n)>-1)})})}
-function norm(p){return{code:p.code,name:pname(p)||p.code,brands:p.brands||"",img:p.image_front_small_url||"",g:grade(p),stores:p.stores||""}}
+function norm(p){return{code:p.code,name:pname(p)||p.code,brands:p.brands||"",img:p.image_front_small_url||"",g:grade(p),stores:p.stores||"",t:p.__t||"food"}}
 function isFav(c){return load("fav").some(function(x){return x.code===c})}
 function toggleFav(o){var L=load("fav"),i=-1;L.forEach(function(x,j){if(x.code===o.code)i=j});if(i>-1)L.splice(i,1);else L.unshift(o);save("fav",L);return i<0}
 function addHist(o){var L=load("hist").filter(function(x){return x.code!==o.code});L.unshift(o);save("hist",L.slice(0,40))}
@@ -31,10 +31,11 @@ var li=el("li"),bx=el("div","alt-item"),tx=el("div");
 if(o.img){var im=el("img");im.src=o.img;im.alt="";bx.appendChild(im)}
 tx.appendChild(el("div","",o.name||o.code));
 if(o.brands)tx.appendChild(el("small","",o.brands));
+if(o.t&&o.t!=="food")tx.appendChild(el("span","tag",t(o.t==="beauty"?"typeBeauty":"typeHome")));
 if(o.stores){tx.appendChild(el("div","small",t("sold")+" : "+o.stores));if(isNear(o.stores))tx.appendChild(el("span","tag",t("near")))}
 bx.appendChild(tx);li.appendChild(bx);
 if(o.g)li.appendChild(el("span","badge ns-"+o.g,o.g.toUpperCase()));
-bx.onclick=function(){loadCode(o.code)};
+bx.onclick=function(){loadCode(o.code,o.t)};
 return li}
 function fill(ul,L){ul.textContent="";if(!L.length){ul.appendChild(el("li","",t("altNone")));return}L.forEach(function(o){ul.appendChild(item(o))})}
 function setView(v){
@@ -42,22 +43,46 @@ function setView(v){
 if(v==="hist")renderList("hist","histList");
 if(v==="fav")renderList("fav","favList")}
 function renderList(key,id){var ul=$(id),L=load(key);ul.textContent="";if(!L.length){ul.appendChild(el("li","",t("empty")));return}L.forEach(function(o){ul.appendChild(item(o))})}
-function loadCode(code){
+function pfields(ty){return ty==="food"?FIELDS+",product_name_"+lang+",nutriments,ingredients_text,ingredients_text_"+lang+",allergens_tags,traces_tags,additives_tags,categories_tags":"code,product_name,product_name_"+lang+",brands,image_front_small_url,quantity,labels,periods_after_opening,ingredients_text,ingredients_text_"+lang+",categories_tags,stores"}
+function fetchProduct(code,ty){
+return getJSON(SRC[ty]+"/api/v2/product/"+encodeURIComponent(code)+".json?fields="+pfields(ty),15000).then(function(d){
+if(d.status===1&&d.product){d.product.code=d.product.code||d.code||code;d.product.__t=ty;return d.product}
+return null})}
+function loadCode(code,type){
 stopScan();setView("scan");msg(t("loading"));$("results").hidden=true;
-getJSON(API+"/api/v2/product/"+encodeURIComponent(code)+".json?fields="+FIELDS+",product_name_"+lang+",nutriments,ingredients_text,ingredients_text_"+lang+",allergens_tags,traces_tags,additives_tags,categories_tags")
-.then(function(d){
-if(d.status!==1||!d.product){msg(t("notfound"),true);$("product").hidden=true;return}
-msg("");current=d.product;current.code=current.code||d.code||code;
-addHist(norm(current));showProduct(current);window.scrollTo(0,0)})
-.catch(function(e){msg(errText(e),true)})}
+var order=type?[type]:["food","beauty","products"],i=0,errs=0,last=null;
+function next(){
+if(i>=order.length){msg(errs===order.length?errText(last):t("notfound"),true);$("product").hidden=true;return}
+fetchProduct(code,order[i++]).catch(function(e){errs++;last=e;return null}).then(function(p){
+if(p){msg("");current=p;addHist(norm(p));showAny(p);window.scrollTo(0,0)}else next()}).catch(function(e){msg(errText(e),true)})}
+next()}
 function searchName(q){
 msg(t("loading"));$("product").hidden=true;
-getJSON(API+"/cgi/search.pl?search_simple=1&action=process&json=1&page_size=12&fields="+FIELDS+",product_name_"+lang+"&search_terms="+encodeURIComponent(q))
-.then(function(d){msg("");var bx=$("results"),ul=el("ul","list"),L=(d.products||[]).filter(function(p){return p.code});
-bx.textContent="";bx.hidden=false;bx.appendChild(el("h2","",t("results")));
-if(!L.length)ul.appendChild(el("li","",t("notfound")));
-L.forEach(function(p){ul.appendChild(item(norm(p)))});bx.appendChild(ul)})
-.catch(function(e){msg(errText(e),true)})}
+var fails=0,jobs=["food","beauty","products"].map(function(ty){
+return getJSON(SRC[ty]+"/cgi/search.pl?search_simple=1&action=process&json=1&page_size=8&fields="+FIELDS+",product_name_"+lang+"&search_terms="+encodeURIComponent(q),15000)
+.then(function(d){return(d.products||[]).filter(function(p){return p.code}).map(function(p){var o=norm(p);o.t=ty;return o})})
+.catch(function(){fails++;return[]})});
+Promise.all(jobs).then(function(R){
+var L=[].concat.apply([],R),bx=$("results"),ul=el("ul","list");
+if(!L.length){msg(fails===3?t("neterr"):t("notfound"),true);bx.hidden=true;return}
+msg("");bx.textContent="";bx.hidden=false;bx.appendChild(el("h2","",t("results")));
+L.forEach(function(o){ul.appendChild(item(o))});bx.appendChild(ul)})}
+function showAny(p){if((p.__t||"food")==="food")showProduct(p);else showOther(p)}
+function showOther(p){
+var box=$("product"),c=el("section","card"),head=el("div","head"),o=norm(p);
+box.hidden=false;box.textContent="";
+if(o.img){var im=el("img");im.src=o.img;im.alt="";head.appendChild(im)}
+var h=el("div");h.appendChild(el("h1","",o.name));h.appendChild(el("div","small",o.brands));h.appendChild(el("span","tag",t(p.__t==="beauty"?"typeBeauty":"typeHome")));head.appendChild(h);
+var fb=el("button","star",isFav(o.code)?"★":"☆");
+fb.onclick=function(){fb.textContent=toggleFav(o)?"★":"☆"};
+head.appendChild(fb);c.appendChild(head);
+function line(k,s){var d=el("p");d.appendChild(el("b","",t(k)+" : "));d.appendChild(document.createTextNode(s));c.appendChild(d)}
+if(p.quantity)line("qty",p.quantity);
+if(p.labels)line("labels",p.labels);
+if(p.periods_after_opening)line("pao",p.periods_after_opening);
+line("ingredients",p["ingredients_text_"+lang]||p.ingredients_text||"–");
+c.appendChild(el("p","small",t("otherNote")));
+box.appendChild(c)}
 function showProduct(p){
 var box=$("product"),c=el("section","card"),head=el("div","head"),o=norm(p);
 box.hidden=false;box.textContent="";
@@ -72,7 +97,9 @@ c.appendChild(sc);
 bd.appendChild(el("span","badge"+(g?" ns-"+g:""),t("nutri")+" "+(g?g.toUpperCase():"?")));
 bd.appendChild(el("span","badge",t("nova")+" "+(nv||"?")));c.appendChild(bd);
 var bad=g==="d"||g==="e"||nv===4||adds>=5,good=(g==="a"||g==="b")&&nv<4&&adds<5;
-c.appendChild(el("div","verdict "+(bad?"v-bad":good?"v-ok":"v-mid"),t(bad?"vBad":good?"vOk":"vMid")));
+var vd=el("div","verdict "+(bad?"v-bad":good?"v-ok":"v-mid")),lgi=el("img","vlogo");
+lgi.src="/icon-192.png";lgi.alt="";vd.appendChild(lgi);vd.appendChild(document.createTextNode(t(bad?"vBad":good?"vOk":"vMid")));
+c.appendChild(vd);c.appendChild(el("p","small",t("vNote")));
 var n=p.nutriments||{},rows=[["energy","energy-kcal_100g"," kcal"],["fat","fat_100g"," g"],["sat","saturated-fat_100g"," g"],["carbs","carbohydrates_100g"," g"],["sugars","sugars_100g"," g"],["fiber","fiber_100g"," g"],["protein","proteins_100g"," g"],["salt","salt_100g"," g"]],tb=el("table");
 c.appendChild(el("h2","",t("per100")));
 rows.forEach(function(r){var v=n[r[1]],tr=el("tr");tr.appendChild(el("td","",t(r[0])));tr.appendChild(el("td","",(v==null||v==="")?"–":(Math.round(v*10)/10)+r[2]));tb.appendChild(tr)});
@@ -151,7 +178,7 @@ if(!arr.length){ul.appendChild(el("li","",t("nostores")));bad();return}
 arr.forEach(function(s){var li=el("li"),tx=el("div"),a=el("a","",t("route"));
 tx.appendChild(el("div","",s.name));tx.appendChild(el("small","",s.d.toFixed(1)+" km"));li.appendChild(tx);
 a.href="https://www.google.com/maps/dir/?api=1&destination="+s.lat+","+s.lon;a.target="_blank";a.rel="noopener noreferrer";li.appendChild(a);ul.appendChild(li)});
-if(cb)cb();else if(current)showProduct(current)})
+if(cb)cb();else if(current)showAny(current)})
 .catch(function(e){ul.textContent="";var li=el("li","err",errText(e)+" "),a=el("a","",t("openMaps"));
 a.href="https://www.google.com/maps/search/supermarket/@"+la+","+lo+",14z";a.target="_blank";a.rel="noopener noreferrer";li.appendChild(a);ul.appendChild(li);bad()})
 },function(){ul.textContent="";ul.appendChild(el("li","",t("locDenied")));bad()},{enableHighAccuracy:false,timeout:20000,maximumAge:60000})}
@@ -181,6 +208,6 @@ $("tab-scan").onclick=function(){setView("scan");window.scrollTo(0,0)};
 $("tab-hist").onclick=function(){setView("hist");window.scrollTo(0,0)};
 $("tab-fav").onclick=function(){setView("fav");window.scrollTo(0,0)};
 $("histClear").onclick=function(){save("hist",[]);renderList("hist","histList")};
-$("lang").onchange=function(){lang=this.value;applyLang();if(current)showProduct(current)};
+$("lang").onchange=function(){lang=this.value;applyLang();if(current)showAny(current)};
 applyLang();
 })();
